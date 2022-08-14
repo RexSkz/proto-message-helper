@@ -17,7 +17,6 @@ jobs:
           npm install -g pnpm
           pnpm i
           pnpm build:pages
-          echo "proto-message-helper.js.org" > docs/CNAME
           git add -A
           git commit -m Pages
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"

@@ -19,3 +19,65 @@ a:visited {
 [disabled] {
   cursor: not-allowed;
 }
+
+.demo-root {
+  background: #fff;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.01);
+  box-sizing: border-box;
+  max-width: 960px;
+  margin: auto;
+  padding: 1em 2em;
+  position: relative;
+  width: 100%;
+
+  .statistics {
+    img {
+      margin-right: 8px;
+    }
+  }
+
+  blockquote {
+    margin: 0 0 1em;
+  }
+
+  .input {
+    &-select {
+      border-radius: 4px;
+      box-sizing: border-box;
+      margin-bottom: 16px;
+      padding: 4px 8px;
+      width: 240px;
+    }
+
+    &-button {
+      margin-left: 8px;
+      padding: 4px 8px;
+    }
+
+    &-textbox {
+      border-radius: 4px;
+      box-sizing: border-box;
+      display: block;
+      margin-bottom: 16px;
+      padding: 4px 8px;
+      resize: vertical;
+      width: 100%;
+    }
+  }
+
+  .output {
+    &-pre {
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      padding: 4px 8px;
+      white-space: pre-wrap;
+    }
+  }
+
+  .demo-footer {
+    border-top: 1px dashed;
+    margin: 4em 0 0;
+    padding: 2em 0;
+    text-align: center;
+  }
+}

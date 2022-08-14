@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { Buffer } from 'buffer/';
 
 import { decoder } from '../src';
 import type { DecodeResult } from '../src';
@@ -7,7 +8,54 @@ import type { DecodeResult } from '../src';
 import './index.less';
 
 const Demo: React.FC = () => {
+  const [mode, setMode] = React.useState('file');
+  const [text, setText] = React.useState('');
   const [result, setResult] = React.useState<DecodeResult | null>(null);
+
+  const analyse = () => {
+    switch (mode) {
+      case 'base64': {
+        const buf = Buffer.from(text, 'base64');
+        setResult(decoder(buf));
+        break;
+      }
+      case 'hex': {
+        const buf = Buffer.from(text, 'hex');
+        setResult(decoder(buf));
+        break;
+      }
+      case 'file': {
+        const file = document.getElementById('file') as HTMLInputElement;
+        const fileReader = new FileReader();
+        fileReader.onload = () => {
+          const buf = Buffer.from(fileReader.result as ArrayBuffer);
+          console.log(buf.toString());
+          setResult(decoder(buf));
+        };
+        if (file.files && file.files.length > 0) {
+          fileReader.readAsArrayBuffer(file.files[0]);
+        }
+        break;
+      }
+    }
+  };
+
+  const replacer = (k, v) => {
+    if (k === 'byte') {
+      return `0x${v.toString(16)}`;
+    }
+    if (k === 'data' && Array.isArray(v)) {
+      return {
+        bytes: `[${v.map(hex => hex.toString(16)).join(' ')}]`,
+        string: v.map(charCode => String.fromCharCode(charCode)).join(''),
+      };
+    }
+    return v;
+  };
+
+  React.useEffect(() => {
+    analyse()
+  }, []);
 
   return (
     <div className="demo-root">
@@ -26,6 +74,29 @@ const Demo: React.FC = () => {
         />
       </div>
       <p>A protobuf message (binary) viewer tool which provide the better output.</p>
+      <select className="input-select" value={mode} onChange={e => setMode(e.target.value)}>
+        <option value="base64">Base64</option>
+        <option value="hex">Hex</option>
+        <option value="file">File (Binary)</option>
+      </select>
+      <button className="input-button" onClick={() => analyse()}>Analyse</button>
+      {
+        mode === 'file' && (
+          <p style={{ margin: '0 0 16px' }}><input id="file" type="file" /></p>
+        )
+      }
+      {
+        mode !== 'file' && (
+          <textarea
+            className="input-textbox"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            rows={10}
+            placeholder={mode === 'base64' ? 'Input base64 string, eg. ChBxbXMu...' : 'Input hex string, e.g. 4d 5a 90 00...'}
+          />
+        )
+      }
+      <pre className="output-pre">{result === null ? '(No result)' : JSON.stringify(result, replacer, 4)}</pre>
       <div className="demo-footer">
         <p>Made with ♥ by Rex Zeng</p>
       </div>

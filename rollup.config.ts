@@ -19,7 +19,7 @@ export default {
     },
   },
   plugins: [
-    resolve({ preferBuiltins: true }),
+    resolve({ preferBuiltins: false }),
     commonjs(),
     esbuild({
       exclude: [],

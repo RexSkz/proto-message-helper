@@ -14,6 +14,7 @@ export enum WireType {
 export interface MessageBlock {
   range: [number, number];
   tag: {
+    byte: number;
     fieldNumber: number;
     wireType: WireType;
   };
@@ -41,7 +42,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
     const byte = buf.readUInt8(i);
     const fieldNumber = byte >> 3;
     const wireType = byte & 0x07;
-    const tag = { fieldNumber, wireType };
+    const tag = { byte, fieldNumber, wireType };
     switch (wireType) {
       case WireType.Varint:
         blocks.push({
@@ -60,23 +61,43 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
         i += 8;
         break;
       case WireType.LengthDelimited:
-        const length = buf.readUInt32BE(i + 1);
+        let length = 0;
+        const originI = i;
+        while (i < buf.length - 1) {
+          i++;
+          const v = buf.readUInt8(i);
+          const msb = v & (1 << 0x7);
+          if (msb === 0) {
+            length = v;
+            i++;
+            break;
+          }
+          length = length << 7 | v & 0x7f;
+        }
         blocks.push({
-          range: [i, i + 1 + 4 + length],
+          range: [originI, i + length - 1],
           tag,
-          value: buf.slice(i + 5, i + 5 + length),
+          value: buf.slice(i, i + length),
         });
-        i += 5 + length;
+        i += length;
         break;
       case WireType.StartGroup:
+        console.warn('Wire type 3 (start group) is deprecated, skipping');
         blocks.push({
-          range: [i, i + 1],
+          range: [i, i],
           tag,
-          value: decoder(buf.slice(i + 1), options),
+          value: null,
         });
         i += 1;
         break;
       case WireType.EndGroup:
+        console.warn('Wire type 4 (end group) is deprecated, skipping');
+        blocks.push({
+          range: [i, i],
+          tag,
+          value: null,
+        });
+        i += 1;
         break;
       case WireType.Fixed32:
         blocks.push({
@@ -87,11 +108,16 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
         i += 4;
         break;
       default:
-        const err = new Error(`Unknown wire type: ${wireType}`);
+        const err = new Error(`Unknown wire type at ${i}: ${wireType}`);
         if (options.breakOnError) {
           throw err;
         }
         console.warn(err);
+        blocks.push({
+          range: [i, i],
+          tag,
+          value: null,
+        });
         i += 1;
     }
   }

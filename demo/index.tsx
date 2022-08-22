@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Buffer } from 'buffer/';
 
-import { decoder } from '../src';
+import { decoder, Viewer } from '../src';
 import type { DecodeResult } from '../src';
 
 import './index.less';
@@ -96,7 +96,8 @@ const Demo: React.FC = () => {
           />
         )
       }
-      <pre className="output-pre">{result === null ? '(No result)' : JSON.stringify(result, replacer, 4)}</pre>
+      {/* <pre className="output-pre">{result === null ? '(No result)' : JSON.stringify(result, replacer, 4)}</pre> */}
+      {result ? <Viewer result={result} /> : <div className="output-pre">(No result)</div>}
       <div className="demo-footer">
         <p>Made with ♥ by Rex Zeng</p>
       </div>

@@ -10,10 +10,31 @@
       padding: 2px 4px;
     }
 
+    &-byte,
+    &-field-number,
+    &-wire-type,
+    &-data {
+      border-radius: 4px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #eee;
+      }
+
+      &:active {
+        background-color: #ddd;
+      }
+    }
+
     &-data {
       span {
         white-space: pre-wrap;
         word-break: break-all;
+      }
+
+      &-unprintable {
+        background: #f00;
+        color: #fff;
       }
     }
   }

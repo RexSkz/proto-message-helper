@@ -19,6 +19,8 @@ export interface MessageBlock {
     wireType: WireType;
   };
   value: any;
+  deprecated?: boolean;
+  hasError?: boolean;
 }
 
 export interface DecodeResult {
@@ -56,7 +58,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
         blocks.push({
           range: [i, i + 8],
           tag,
-          value: buf.readDoubleBE(i),
+          value: buf.readBigInt64BE(i),
         });
         i += 8;
         break;
@@ -87,6 +89,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
           range: [i, i],
           tag,
           value: null,
+          deprecated: true,
         });
         i += 1;
         break;
@@ -96,6 +99,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
           range: [i, i],
           tag,
           value: null,
+          deprecated: true,
         });
         i += 1;
         break;
@@ -103,7 +107,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
         blocks.push({
           range: [i, i + 4],
           tag,
-          value: buf.readFloatBE(i),
+          value: buf.readInt32BE(i),
         });
         i += 4;
         break;
@@ -112,11 +116,12 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
         if (options.breakOnError) {
           throw err;
         }
-        console.warn(err);
+        console.error(err);
         blocks.push({
           range: [i, i],
           tag,
           value: null,
+          hasError: true,
         });
         i += 1;
     }

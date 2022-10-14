@@ -40,49 +40,21 @@ const Demo: React.FC = () => {
     }
   };
 
-  const replacer = (k, v) => {
-    if (k === 'byte') {
-      return `0x${v.toString(16)}`;
-    }
-    if (k === 'data' && Array.isArray(v)) {
-      return {
-        bytes: `[${v.map(hex => hex.toString(16)).join(' ')}]`,
-        string: v.map(charCode => String.fromCharCode(charCode)).join(''),
-      };
-    }
-    return v;
-  };
-
-  React.useEffect(() => {
-    analyse()
-  }, []);
-
   return (
     <div className="demo-root">
       <h1>Proto Message Helper</h1>
-      <div className="statistics">
-        <img src="https://img.shields.io/npm/v/proto-message-helper.svg" />
-        <img src="https://img.shields.io/npm/dm/proto-message-helper.svg" />
-        <img src="https://codecov.io/gh/RexSkz/proto-message-helper/branch/master/graph/badge.svg?token=8YRG3M4WTO" />
-        <iframe
-          src="https://ghbtns.com/github-btn.html?user=rexskz&repo=proto-message-helper&type=star&count=true"
-          frameBorder="0"
-          scrolling="0"
-          width="150"
-          height="20"
-          title="GitHub"
-        />
-      </div>
-      <p>A protobuf message (binary) viewer tool which provide the better output.</p>
+      <p>A protobuf message (binary) viewer tool which provides the better output.</p>
       <select className="input-select" value={mode} onChange={e => setMode(e.target.value)}>
         <option value="base64">Base64</option>
         <option value="hex">Hex</option>
         <option value="file">File (Binary)</option>
       </select>
-      <button className="input-button" onClick={() => analyse()}>Analyse</button>
+      <button className="input-button" onClick={analyse}>Analyse</button>
       {
         mode === 'file' && (
-          <p style={{ margin: '0 0 16px' }}><input id="file" type="file" /></p>
+          <p style={{ margin: '0 0 16px', border: '1px solid #bbb', borderRadius: 4, padding: 8 }}>
+            <input id="file" type="file" />
+          </p>
         )
       }
       {
@@ -96,8 +68,7 @@ const Demo: React.FC = () => {
           />
         )
       }
-      {/* <pre className="output-pre">{result === null ? '(No result)' : JSON.stringify(result, replacer, 4)}</pre> */}
-      {result ? <Viewer result={result} /> : <div className="output-pre">(No result)</div>}
+      {result ? <Viewer result={result} /> : <pre className="output-pre">(No result)</pre>}
       <div className="demo-footer">
         <p>Made with ♥ by Rex Zeng</p>
       </div>

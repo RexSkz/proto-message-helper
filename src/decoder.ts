@@ -1,6 +1,7 @@
 // The trailing slash is important, which tells the Node.JS to use the npm
 // package named `buffer` instead of the core module named `buffer`.
 import { Buffer } from 'buffer/';
+import * as t from 'proto-parser';
 
 export enum WireType {
   Varint = 0,
@@ -16,6 +17,7 @@ export interface MessageBlock {
   tag: {
     byte: number;
     fieldNumber: number;
+    fieldName?: string;
     wireType: WireType;
   };
   value: any;
@@ -28,6 +30,7 @@ export interface DecodeResult {
 }
 
 export interface DecoderOptions {
+  protoFile?: string;
   breakOnError?: boolean;
 }
 
@@ -35,8 +38,33 @@ const defaultOptions: DecoderOptions = {
   breakOnError: false,
 };
 
+// get all fields recursively from proto-parser ast
+const getFields = (
+  node: Record<string, any>,
+  fieldsMap: Map<number, t.FieldDefinition>,
+) => {
+  if (node.fields) {
+    for (const field of Object.values(node.fields) as t.FieldDefinition[]) {
+      fieldsMap.set(field.id, field);
+    }
+  } else if (node.nested) {
+    for (const nested of Object.values(node.nested)) {
+      getFields(nested, fieldsMap);
+    }
+  }
+};
+
 const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
   options = { ...defaultOptions, ...options };
+
+  const fieldsMap = new Map<number, t.FieldDefinition>();
+  if (options.protoFile) {
+    const ast = t.parse(options.protoFile);
+    if (ast.syntaxType === t.SyntaxType.ProtoError) {
+      throw new Error(`Failed to parse proto file: ${ast.message}`);
+    }
+    getFields(ast.root, fieldsMap);
+  }
 
   const blocks: MessageBlock[] = [];
   let i = 0;
@@ -44,7 +72,12 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
     const byte = buf.readUInt8(i);
     const fieldNumber = byte >> 3;
     const wireType = byte & 0x07;
-    const tag = { byte, fieldNumber, wireType };
+    const tag = {
+      byte,
+      fieldNumber,
+      fieldName: fieldsMap.get(fieldNumber)?.name,
+      wireType,
+    };
     switch (wireType) {
       case WireType.Varint:
         blocks.push({

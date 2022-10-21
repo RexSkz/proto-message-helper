@@ -53,6 +53,7 @@
     "react-dom": "^18.2.0 || ^17.0.0 || ^16.0.0"
   },
   "dependencies": {
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "proto-parser": "^0.0.8"
   }
 }

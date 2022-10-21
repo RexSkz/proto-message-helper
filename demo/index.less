@@ -35,29 +35,45 @@ a:visited {
     margin: 0 0 1em;
   }
 
+  .demo-input {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1em;
+    padding-top: 1em;
+    font-size: 14px;
+    border-top: 1px dashed;
+
+    & > div {
+      width: calc(50% - 1.5em);
+      margin-bottom: 1em;
+      padding: 0.5em;
+      border: 1px solid #858585;
+      border-radius: 4px;
+    }
+  }
+
   .input {
     &-select {
       border-radius: 4px;
       box-sizing: border-box;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
       padding: 4px 8px;
       width: 240px;
-    }
-
-    &-button {
-      margin-left: 8px;
-      padding: 4px 8px;
     }
 
     &-textbox {
       border-radius: 4px;
       box-sizing: border-box;
       display: block;
-      margin-bottom: 16px;
       padding: 4px 8px;
       resize: vertical;
       width: 100%;
     }
+  }
+
+  .analyse {
+    margin-bottom: 1em;
+    padding: 4px 8px;
   }
 
   .output-pre {

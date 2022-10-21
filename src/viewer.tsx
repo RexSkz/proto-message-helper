@@ -88,6 +88,13 @@ const Viewer: React.FC<ViewerProps> = props => {
 
   return (
     <div className="proto-message-viewer">
+      <div className="proto-message-viewer-message proto-message-viewer-message-header">
+        <span className="proto-message-viewer-message-icon">&nbsp;</span>
+        <span className="proto-message-viewer-message-byte">Tag</span>
+        <span className="proto-message-viewer-message-field-number">Field</span>
+        <span className="proto-message-viewer-message-wire-type">WireType</span>
+        <span className="proto-message-viewer-message-data">Data</span>
+      </div>
       {
         props.result.blocks.map((message, index) => {
           const classes = [
@@ -111,7 +118,10 @@ const Viewer: React.FC<ViewerProps> = props => {
                 }
               </span>
               <span className="proto-message-viewer-message-byte" {...copyableProps}>0x{message.tag.byte.toString(16).padStart(2, '0')}</span>
-              <span className="proto-message-viewer-message-field-number" {...copyableProps}>{message.tag.fieldNumber}</span>
+              <span className="proto-message-viewer-message-field-number" {...copyableProps}>
+                {message.tag.fieldNumber}
+                {message.tag.fieldName ? `(${message.tag.fieldName})` : ''}
+              </span>
               <span className="proto-message-viewer-message-wire-type" {...copyableProps}>{renderWireType(message)}</span>
               <span className="proto-message-viewer-message-data" {...copyableProps}>
                 {renderData(message.value, message.tag.wireType)}

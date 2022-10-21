@@ -5,9 +5,18 @@
   &-message {
     display: table-row;
 
+    &-header {
+      font-weight: bold;
+
+      & > * {
+        background-color: transparent !important;
+        cursor: unset !important;
+      }
+    }
+
     & > span {
       display: table-cell;
-      padding: 2px 4px;
+      padding: 2px 8px;
     }
 
     &-byte,

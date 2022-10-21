@@ -12,6 +12,7 @@ specifiers:
   esbuild-jest: ^0.5.0
   esbuild-plugin-less: ^1.1.9
   jest: ^27.5.1
+  proto-parser: ^0.0.8
   react: ^17.0.2
   react-dom: ^17.0.2
   rollup: ^2.77.3
@@ -22,6 +23,7 @@ specifiers:
 
 dependencies:
   buffer: 6.0.3
+  proto-parser: 0.0.8
 
 devDependencies:
   '@rollup/plugin-commonjs': 21.1.0_rollup@2.77.3
@@ -3653,6 +3655,10 @@ packages:
       kleur: 3.0.3
       sisteransi: 1.0.5
     dev: true
+
+  /proto-parser/0.0.8:
+    resolution: {integrity: sha512-bY32Df1cS/ky9f1yw3V2icOJZ1b541l8CQ6r+qWtp+MmAw4pMN2mY5XbfavQyvqKMklA9QM8W1nBKKTnYIdTFg==}
+    dev: false
 
   /prr/1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}

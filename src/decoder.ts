@@ -17,6 +17,7 @@ export interface MessageBlock {
   tag: {
     byte: number;
     fieldNumber: number;
+    fieldType?: string;
     fieldName?: string;
     wireType: WireType;
   };
@@ -59,7 +60,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
 
   const fieldsMap = new Map<number, t.FieldDefinition>();
   if (options.protoFile) {
-    const ast = t.parse(options.protoFile);
+    const ast = t.parse(options.protoFile, { weakResolve: true });
     if (ast.syntaxType === t.SyntaxType.ProtoError) {
       throw new Error(`Failed to parse proto file: ${ast.message}`);
     }
@@ -75,6 +76,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
     const tag = {
       byte,
       fieldNumber,
+      fieldType: fieldsMap.get(fieldNumber)?.type.value,
       fieldName: fieldsMap.get(fieldNumber)?.name,
       wireType,
     };

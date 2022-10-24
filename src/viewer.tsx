@@ -6,6 +6,7 @@ import './viewer.less';
 
 export interface ViewerProps {
   result: DecodeResult;
+  sortByField?: boolean;
 }
 
 interface Part {
@@ -14,6 +15,12 @@ interface Part {
 }
 
 const Viewer: React.FC<ViewerProps> = props => {
+  const blocks = React.useMemo(() => {
+    return props.sortByField
+      ? [...props.result.blocks].sort((a, b) => a.tag.fieldNumber - b.tag.fieldNumber)
+      : props.result.blocks;
+  }, [props.result.blocks, props.sortByField]);
+
   const renderWireType = (message: MessageBlock) => {
     if (message.tag.wireType === WireType.LengthDelimited) {
       return `${WireType[message.tag.wireType]}(${message.value.length})`;
@@ -96,7 +103,7 @@ const Viewer: React.FC<ViewerProps> = props => {
         <span className="proto-message-viewer-message-data">Data</span>
       </div>
       {
-        props.result.blocks.map((message, index) => {
+        blocks.map((message, index) => {
           const classes = [
             'proto-message-viewer-message',
             message.deprecated && 'proto-message-viewer-message-deprecated',
@@ -120,7 +127,14 @@ const Viewer: React.FC<ViewerProps> = props => {
               <span className="proto-message-viewer-message-byte" {...copyableProps}>0x{message.tag.byte.toString(16).padStart(2, '0')}</span>
               <span className="proto-message-viewer-message-field-number" {...copyableProps}>
                 {message.tag.fieldNumber}
-                {message.tag.fieldName ? `(${message.tag.fieldName})` : ''}
+                {
+                  message.tag.fieldName && (
+                    <abbr className="proto-message-viewer-message-field-type">
+                      <span>{message.tag.fieldType}</span>
+                      ({message.tag.fieldName})
+                    </abbr>
+                  )
+                }
               </span>
               <span className="proto-message-viewer-message-wire-type" {...copyableProps}>{renderWireType(message)}</span>
               <span className="proto-message-viewer-message-data" {...copyableProps}>

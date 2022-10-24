@@ -35,6 +35,37 @@
       }
     }
 
+    &-field-number {
+      white-space: nowrap;
+    }
+
+    &-field-type {
+      position: relative;
+      border-bottom: 1px dotted;
+
+      & > span {
+        position: absolute;
+        top: -25px;
+        left: 0;
+        padding: 4px 8px;
+        white-space: nowrap;
+        color: #fff;
+        background: #000;
+        border: 1px solid #fff;
+        box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        opacity: 0;
+        transform: translateY(20%);
+        transition: all 0.1s ease-out;
+        pointer-events: none;
+      }
+
+      &:hover > span {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     &-data {
       span {
         white-space: pre-wrap;

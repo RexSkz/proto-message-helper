@@ -13,6 +13,7 @@ const Demo: React.FC = () => {
   const [modeProto, setModeProto] = React.useState('file');
   const [textProto, setTextProto] = React.useState('');
   const [result, setResult] = React.useState<DecodeResult | null>(null);
+  const [sortByField, setSortByField] = React.useState(false);
 
   const read = (mode: string, text: string, id: string) => {
     switch (mode) {
@@ -64,11 +65,11 @@ const Demo: React.FC = () => {
       <p>A protobuf message (binary) viewer tool which provides the better output.</p>
       <div className="demo-input">
         <div className="demo-input-message">
-          <span>Binary message: </span>
+          <span>Binary message (required): </span>
           <select className="input-select" value={modeMessage} onChange={e => setModeMessage(e.target.value)}>
             <option value="base64">Base64</option>
             <option value="hex">Hex</option>
-            <option value="file">File (Binary)</option>
+            <option value="file">File</option>
           </select>
           {
             modeMessage === 'file' && (
@@ -90,11 +91,11 @@ const Demo: React.FC = () => {
           }
         </div>
         <div className="demo-input-proto">
-          <span>Proto file: </span>
+          <span>Proto file (optional): </span>
           <select className="input-select" value={modeProto} onChange={e => setModeProto(e.target.value)}>
             <option value="base64">Base64</option>
             <option value="hex">Hex</option>
-            <option value="file">File (Binary)</option>
+            <option value="file">File</option>
           </select>
           {
             modeProto === 'file' && (
@@ -116,8 +117,23 @@ const Demo: React.FC = () => {
           }
         </div>
       </div>
-      <button className="analyse" onClick={analyse}>Analyse</button>
-      {result ? <Viewer result={result} /> : <pre className="output-pre">(No result)</pre>}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1em' }}>
+        <button className="analyse" onClick={analyse}>Analyse</button>
+        {
+          !!result && (
+            <label htmlFor="sort-by-field">
+              <input
+                type="checkbox"
+                id="sort-by-field"
+                checked={sortByField}
+                onChange={e => setSortByField(e.target.checked)}
+              />
+              Sort by field ID
+            </label>
+          )
+        }
+      </div>
+      {result ? <Viewer result={result} sortByField={sortByField} /> : <pre className="output-pre">(No result)</pre>}
       <div className="demo-footer">
         <p>Made with ♥ by Rex Zeng</p>
       </div>

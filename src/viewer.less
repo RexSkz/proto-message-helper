@@ -1,9 +1,14 @@
 .proto-message-viewer {
   display: table;
   font-family: monospace;
+  white-space: pre-wrap;
 
   &-message {
     display: table-row;
+
+    &-data-highlight {
+      background-color: yellow;
+    }
 
     &-header {
       font-weight: bold;
@@ -76,6 +81,10 @@
         background: #f00;
         color: #fff;
       }
+    }
+
+    &-indent-text {
+      opacity: 0.2;
     }
   }
 }

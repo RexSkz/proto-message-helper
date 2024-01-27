@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "person.pb";
+
+message Person {
+  string name = 1;
+  int32 age = 2;
+  Gender gender = 3;
+  repeated Address addresses = 4;
+}
+
+enum Gender {
+  UNKNOWN = 0;
+  MALE = 1;
+  FEMALE = 2;
+}
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string zip = 4;
+}

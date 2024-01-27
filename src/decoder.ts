@@ -24,10 +24,13 @@ export interface MessageBlock {
   value: any;
   deprecated?: boolean;
   hasError?: boolean;
+  indent: number;
 }
 
 export interface DecodeResult {
+  buffer: Buffer;
   blocks: MessageBlock[];
+  hasError: boolean;
 }
 
 export interface DecoderOptions {
@@ -55,7 +58,7 @@ const getFields = (
   }
 };
 
-const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
+const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0): DecodeResult => {
   options = { ...defaultOptions, ...options };
 
   const fieldsMap = new Map<number, t.FieldDefinition>();
@@ -68,6 +71,7 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
   }
 
   const blocks: MessageBlock[] = [];
+  let seemsNotASubMessage = false;
   let i = 0;
   while (i < buf.length) {
     const byte = buf.readUInt8(i);
@@ -80,28 +84,29 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
       fieldName: fieldsMap.get(fieldNumber)?.name,
       wireType,
     };
+    i++;
     switch (wireType) {
       case WireType.Varint:
         blocks.push({
-          range: [i, i + 1],
+          range: [i + offset, i + 1 + offset],
           tag,
           value: buf.readInt8(i),
+          indent,
         });
         i += 1;
         break;
       case WireType.Fixed64:
         blocks.push({
-          range: [i, i + 8],
+          range: [i + offset, i + 8 + offset],
           tag,
           value: buf.readBigInt64BE(i),
+          indent,
         });
         i += 8;
         break;
       case WireType.LengthDelimited:
         let length = 0;
-        const originI = i;
         while (i < buf.length - 1) {
-          i++;
           const v = buf.readUInt8(i);
           const msb = v & (1 << 0x7);
           if (msb === 0) {
@@ -110,59 +115,81 @@ const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
             break;
           }
           length = length << 7 | v & 0x7f;
+          i++;
+        }
+        if (i + length - 1 >= buf.length) {
+          seemsNotASubMessage = true;
+          const err = new Error(`Unexpected end of buffer at ${i + length - 1}`);
+          if (options.breakOnError) {
+            throw err;
+          }
         }
         blocks.push({
-          range: [originI, i + length - 1],
+          range: [i + offset, i + length - 1 + offset],
           tag,
           value: buf.slice(i, i + length),
+          indent,
         });
+        try {
+          const subMessages = decoder(buf.slice(i, i + length), options, indent + 1, i);
+          if (!subMessages.hasError) blocks.push(...subMessages.blocks);
+        } catch { }
         i += length;
         break;
       case WireType.StartGroup:
         console.warn('Wire type 3 (start group) is deprecated, skipping');
+        seemsNotASubMessage = true;
         blocks.push({
-          range: [i, i],
+          range: [i + offset, i + offset],
           tag,
           value: null,
           deprecated: true,
+          indent,
         });
         i += 1;
         break;
       case WireType.EndGroup:
         console.warn('Wire type 4 (end group) is deprecated, skipping');
+        seemsNotASubMessage = true;
         blocks.push({
-          range: [i, i],
+          range: [i + offset, i + offset],
           tag,
           value: null,
           deprecated: true,
+          indent,
         });
         i += 1;
         break;
       case WireType.Fixed32:
         blocks.push({
-          range: [i, i + 4],
+          range: [i + offset, i + 4 + offset],
           tag,
           value: buf.readInt32BE(i),
+          indent,
         });
         i += 4;
         break;
       default:
+        seemsNotASubMessage = true;
         const err = new Error(`Unknown wire type at ${i}: ${wireType}`);
         if (options.breakOnError) {
           throw err;
         }
         console.error(err);
         blocks.push({
-          range: [i, i],
+          range: [i + offset, i + offset],
           tag,
           value: null,
           hasError: true,
+          indent,
         });
         i += 1;
     }
   }
   return {
+    buffer: buf,
     blocks,
+    hasError: seemsNotASubMessage,
   };
 };
 

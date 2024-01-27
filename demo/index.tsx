@@ -24,7 +24,7 @@ const Demo: React.FC = () => {
       }
       case 'hex': {
         if (!text) return Promise.reject('No hex data');
-        const buf = Buffer.from(text, 'hex');
+        const buf = Buffer.from(text.replace(/\s/g, ''), 'hex');
         return Promise.resolve(buf);
       }
       case 'file': {
@@ -100,7 +100,7 @@ const Demo: React.FC = () => {
           {
             modeProto === 'file' && (
               <p style={{ margin: 0, border: '1px solid #858585', borderRadius: 4, padding: 8 }}>
-                <input id="file-proto" type="file" />
+                <input id="file-proto" type="file" accept=".proto" />
               </p>
             )
           }
@@ -133,7 +133,11 @@ const Demo: React.FC = () => {
           )
         }
       </div>
-      {result ? <Viewer result={result} sortByField={sortByField} /> : <pre className="output-pre">(No result)</pre>}
+      {
+        result
+          ? <Viewer result={result} sortByField={sortByField} showRawData />
+          : <pre className="output-pre">(No result)</pre>
+      }
       <div className="demo-footer">
         <p>Made with ♥ by Rex Zeng</p>
       </div>

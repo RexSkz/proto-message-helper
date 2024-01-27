@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Buffer } from 'buffer/';
 
 import { DecodeResult, MessageBlock, WireType } from './decoder';
 
@@ -7,6 +8,7 @@ import './viewer.less';
 export interface ViewerProps {
   result: DecodeResult;
   sortByField?: boolean;
+  showRawData?: boolean;
 }
 
 interface Part {
@@ -15,6 +17,8 @@ interface Part {
 }
 
 const Viewer: React.FC<ViewerProps> = props => {
+  const [highlightRange, setHighlightRange] = React.useState<[number, number]>([-1, -1]);
+
   const blocks = React.useMemo(() => {
     return props.sortByField
       ? [...props.result.blocks].sort((a, b) => a.tag.fieldNumber - b.tag.fieldNumber)
@@ -93,58 +97,107 @@ const Viewer: React.FC<ViewerProps> = props => {
     alert(`Copied to clipboard: ${text}`);
   };
 
+  const renderRangeHighlight = (buffer: Buffer, range: [number, number]) => {
+    const str = buffer.toString('hex').replace(/(?<=^(?:..)+)/g, ' ').trim();
+    if (range[0] < 0 && range[1] < 0) return str;
+
+    const start = range[0] * 3;
+    const end = range[1] * 3 + 2;
+    return (
+      <>
+        {str.slice(0, start)}
+        <span className="proto-message-viewer-message-data-highlight">
+          {str.slice(start, end)}
+        </span>
+        {str.slice(end)}
+      </>
+    );
+  };
+
+  const renderIndent = (indent: number) => {
+    if (props.sortByField) return null;
+    return (
+      <span className="proto-message-viewer-message-indent-text">
+        {'│ '.repeat(indent)}
+      </span>
+    );
+  };
+
   return (
-    <div className="proto-message-viewer">
-      <div className="proto-message-viewer-message proto-message-viewer-message-header">
-        <span className="proto-message-viewer-message-icon">&nbsp;</span>
-        <span className="proto-message-viewer-message-byte">Tag</span>
-        <span className="proto-message-viewer-message-field-number">Field</span>
-        <span className="proto-message-viewer-message-wire-type">WireType</span>
-        <span className="proto-message-viewer-message-data">Data</span>
-      </div>
+    <>
       {
-        blocks.map((message, index) => {
-          const classes = [
-            'proto-message-viewer-message',
-            message.deprecated && 'proto-message-viewer-message-deprecated',
-            message.hasError && 'proto-message-viewer-message-error',
-          ].filter(Boolean).join(' ');
-          const copyableProps = {
-            onClick: copyText,
-            title: 'Click to copy',
-          };
-          return (
-            <div className={classes} key={index}>
-              <span className="proto-message-viewer-message-icon">
-                {
-                  message.hasError
-                    ? '❌'
-                    : message.deprecated
-                      ? '⚠️'
-                      : '✅'
-                }
-              </span>
-              <span className="proto-message-viewer-message-byte" {...copyableProps}>0x{message.tag.byte.toString(16).padStart(2, '0')}</span>
-              <span className="proto-message-viewer-message-field-number" {...copyableProps}>
-                {message.tag.fieldNumber}
-                {
-                  message.tag.fieldName && (
-                    <abbr className="proto-message-viewer-message-field-type">
-                      <span>{message.tag.fieldType}</span>
-                      ({message.tag.fieldName})
-                    </abbr>
-                  )
-                }
-              </span>
-              <span className="proto-message-viewer-message-wire-type" {...copyableProps}>{renderWireType(message)}</span>
-              <span className="proto-message-viewer-message-data" {...copyableProps}>
-                {renderData(message.value, message.tag.wireType)}
-              </span>
-            </div>
-          );
-        })
+        props.showRawData ? (
+          <pre className="output-pre">{renderRangeHighlight(props.result.buffer, highlightRange)}</pre>
+        ) : null
       }
-    </div>
+      <div className="proto-message-viewer">
+        <div className="proto-message-viewer-message proto-message-viewer-message-header">
+          <span className="proto-message-viewer-message-icon">&nbsp;</span>
+          <span className="proto-message-viewer-message-byte">Tag</span>
+          <span className="proto-message-viewer-message-field-number">Field</span>
+          <span className="proto-message-viewer-message-wire-type">WireType</span>
+          <span className="proto-message-viewer-message-indent">Indent</span>
+          <span className="proto-message-viewer-message-data">Data</span>
+        </div>
+        {
+          blocks.map((message, index) => {
+            const classes = [
+              'proto-message-viewer-message',
+              message.deprecated && 'proto-message-viewer-message-deprecated',
+              message.hasError && 'proto-message-viewer-message-error',
+            ].filter(Boolean).join(' ');
+            const copyableProps = {
+              onClick: copyText,
+              title: 'Click to copy',
+            };
+            return (
+              <div
+                className={classes}
+                key={index}
+                onMouseEnter={() => setHighlightRange(message.range)}
+                onMouseLeave={() => setHighlightRange([-1, -1])}
+              >
+                <span className="proto-message-viewer-message-icon">
+                  {
+                    message.hasError
+                      ? '❌'
+                      : message.deprecated
+                        ? '⚠️'
+                        : '✅'
+                  }
+                </span>
+                <span className="proto-message-viewer-message-byte" {...copyableProps}>
+                  0x{message.tag.byte.toString(16).padStart(2, '0')}
+                </span>
+                <span className="proto-message-viewer-message-field-number" {...copyableProps}>
+                  0b{message.tag.fieldNumber.toString(2).padStart(5, '0')}
+                  {
+                    message.tag.fieldName && (
+                      <abbr className="proto-message-viewer-message-field-type">
+                        <span>{message.tag.fieldType}</span>
+                        ({message.tag.fieldName})
+                      </abbr>
+                    )
+                  }
+                </span>
+                <span className="proto-message-viewer-message-wire-type" {...copyableProps}>
+                  {renderIndent(message.indent)}
+                  0b{message.tag.wireType.toString(2).padStart(3, '0')}&nbsp;
+                  {renderWireType(message)}
+                </span>
+                <span className="proto-message-viewer-message-indent" {...copyableProps}>
+                  {message.indent}
+                </span>
+                <span className="proto-message-viewer-message-data" {...copyableProps}>
+                  {renderIndent(message.indent)}
+                  {renderData(message.value, message.tag.wireType)}
+                </span>
+              </div>
+            );
+          })
+        }
+      </div>
+    </>
   );
 };
 

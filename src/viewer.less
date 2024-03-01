@@ -1,7 +1,21 @@
 .proto-message-viewer {
   display: table;
+  width: 100%;
   font-family: monospace;
   white-space: pre-wrap;
+
+  &-output-pre {
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+
+    & + select {
+      width: 240px;
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+  }
 
   &-message {
     display: table-row;

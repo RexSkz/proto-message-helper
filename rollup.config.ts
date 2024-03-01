@@ -3,6 +3,7 @@ import esbuild from 'rollup-plugin-esbuild';
 import html from '@rollup/plugin-html';
 import less from 'rollup-plugin-less';
 import resolve from '@rollup/plugin-node-resolve';
+import { string } from 'rollup-plugin-string';
 import serve from 'rollup-plugin-serve';
 
 const BASEDIR = process.env.BASEDIR || '.cache';
@@ -19,6 +20,7 @@ export default {
     },
   },
   plugins: [
+    string({ include: ['**/*.proto', '**/*.bin'] }),
     resolve({ preferBuiltins: false }),
     commonjs(),
     esbuild({

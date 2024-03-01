@@ -1,7 +1,10 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom/client';
 import { Buffer } from 'buffer/';
 import ForkMeOnGithub from 'fork-me-on-github';
+
+import messageExample from './go/person/person.bin';
+import protoExample from './go/person/person.proto';
 
 import { decoder, Viewer } from '../src';
 import type { DecodeResult } from '../src';
@@ -13,11 +16,17 @@ const Demo: React.FC = () => {
   const [textMessage, setTextMessage] = React.useState('');
   const [modeProto, setModeProto] = React.useState('file');
   const [textProto, setTextProto] = React.useState('');
+  const [protoFile, setProtoFile] = React.useState('');
   const [result, setResult] = React.useState<DecodeResult | null>(null);
   const [sortByField, setSortByField] = React.useState(false);
 
   const read = (mode: string, text: string, id: string) => {
     switch (mode) {
+      case 'text': {
+        if (!text) return Promise.reject('No text data');
+        const buf = Buffer.from(text);
+        return Promise.resolve(buf);
+      }
       case 'base64': {
         if (!text) return Promise.reject('No base64 data');
         const buf = Buffer.from(text, 'base64');
@@ -51,13 +60,24 @@ const Demo: React.FC = () => {
 
   const analyse = async () => {
     const message = await read(modeMessage, textMessage, 'file-message');
-    let proto: Buffer | null = null;
+    setResult(decoder(message));
     try {
+      let proto: Buffer | null = null;
       proto = await read(modeProto, textProto, 'file-proto');
+      setProtoFile(proto.toString());
     } catch {
       // ignore
     }
-    setResult(decoder(message, { protoFile: proto?.toString() || undefined }));
+  };
+
+  const setInputExample = () => {
+    setModeMessage('hex');
+    setTextMessage(messageExample.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' '));
+  };
+
+  const setProtoExample = () => {
+    setModeProto('text');
+    setTextProto(protoExample);
   };
 
   return (
@@ -72,6 +92,7 @@ const Demo: React.FC = () => {
             <option value="hex">Hex</option>
             <option value="file">File</option>
           </select>
+          <a className="input-example-button" onClick={setInputExample}>Example</a>
           {
             modeMessage === 'file' && (
               <p style={{ margin: 0, border: '1px solid #858585', borderRadius: 4, padding: 8 }}>
@@ -94,10 +115,12 @@ const Demo: React.FC = () => {
         <div className="demo-input-proto">
           <span>Proto file (optional): </span>
           <select className="input-select" value={modeProto} onChange={e => setModeProto(e.target.value)}>
+            <option value="text">Text</option>
             <option value="base64">Base64</option>
             <option value="hex">Hex</option>
             <option value="file">File</option>
           </select>
+          <a className="input-example-button" onClick={setProtoExample}>Example</a>
           {
             modeProto === 'file' && (
               <p style={{ margin: 0, border: '1px solid #858585', borderRadius: 4, padding: 8 }}>
@@ -136,7 +159,7 @@ const Demo: React.FC = () => {
       </div>
       {
         result
-          ? <Viewer result={result} sortByField={sortByField} showRawData />
+          ? <Viewer result={result} sortByField={sortByField} showRawData protoFile={protoFile} />
           : <pre className="output-pre">(No result)</pre>
       }
       <div className="demo-footer">
@@ -147,4 +170,5 @@ const Demo: React.FC = () => {
   );
 };
 
-ReactDOM.render(<Demo />, document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Demo />);

@@ -1,7 +1,6 @@
 // The trailing slash is important, which tells the Node.JS to use the npm
 // package named `buffer` instead of the core module named `buffer`.
 import { Buffer } from 'buffer/';
-import * as t from 'proto-parser';
 
 export enum WireType {
   Varint = 0,
@@ -17,8 +16,8 @@ export interface MessageBlock {
   tag: {
     byte: number;
     fieldNumber: number;
+    fieldNumbers: number[];
     fieldType?: string;
-    fieldName?: string;
     wireType: WireType;
   };
   value: any;
@@ -34,7 +33,6 @@ export interface DecodeResult {
 }
 
 export interface DecoderOptions {
-  protoFile?: string;
   breakOnError?: boolean;
 }
 
@@ -42,33 +40,14 @@ const defaultOptions: DecoderOptions = {
   breakOnError: false,
 };
 
-// get all fields recursively from proto-parser ast
-const getFields = (
-  node: Record<string, any>,
-  fieldsMap: Map<number, t.FieldDefinition>,
-) => {
-  if (node.fields) {
-    for (const field of Object.values(node.fields) as t.FieldDefinition[]) {
-      fieldsMap.set(field.id, field);
-    }
-  } else if (node.nested) {
-    for (const nested of Object.values(node.nested)) {
-      getFields(nested, fieldsMap);
-    }
-  }
-};
-
-const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0): DecodeResult => {
+const _decoder = (
+  buf: Buffer,
+  options: DecoderOptions,
+  indent: number,
+  offset: number,
+  prefix: number[] = [],
+): DecodeResult => {
   options = { ...defaultOptions, ...options };
-
-  const fieldsMap = new Map<number, t.FieldDefinition>();
-  if (options.protoFile) {
-    const ast = t.parse(options.protoFile, { weakResolve: true });
-    if (ast.syntaxType === t.SyntaxType.ProtoError) {
-      throw new Error(`Failed to parse proto file: ${ast.message}`);
-    }
-    getFields(ast.root, fieldsMap);
-  }
 
   const blocks: MessageBlock[] = [];
   let seemsNotASubMessage = false;
@@ -76,12 +55,12 @@ const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0):
   while (i < buf.length) {
     const byte = buf.readUInt8(i);
     const fieldNumber = byte >> 3;
+    const fieldNumbers = [...prefix, fieldNumber];
     const wireType = byte & 0x07;
     const tag = {
       byte,
       fieldNumber,
-      fieldType: fieldsMap.get(fieldNumber)?.type.value,
-      fieldName: fieldsMap.get(fieldNumber)?.name,
+      fieldNumbers,
       wireType,
     };
     i++;
@@ -131,13 +110,21 @@ const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0):
           indent,
         });
         try {
-          const subMessages = decoder(buf.slice(i, i + length), options, indent + 1, i);
+          const subMessages = _decoder(
+            buf.slice(i, i + length),
+            options,
+            indent + 1,
+            i,
+            fieldNumbers,
+          );
           if (!subMessages.hasError) blocks.push(...subMessages.blocks);
         } catch { }
         i += length;
         break;
       case WireType.StartGroup:
-        console.warn('Wire type 3 (start group) is deprecated, skipping');
+        if (indent === 0) {
+          console.warn('Wire type 3 (start group) is deprecated, skipping');
+        }
         seemsNotASubMessage = true;
         blocks.push({
           range: [i + offset, i + offset],
@@ -149,7 +136,9 @@ const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0):
         i += 1;
         break;
       case WireType.EndGroup:
-        console.warn('Wire type 4 (end group) is deprecated, skipping');
+        if (indent === 0) {
+          console.warn('Wire type 4 (end group) is deprecated, skipping');
+        }
         seemsNotASubMessage = true;
         blocks.push({
           range: [i + offset, i + offset],
@@ -175,7 +164,9 @@ const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0):
         if (options.breakOnError) {
           throw err;
         }
-        console.error(err);
+        if (indent === 0) {
+          console.error(err);
+        }
         blocks.push({
           range: [i + offset, i + offset],
           tag,
@@ -191,6 +182,10 @@ const decoder = (buf: Buffer, options?: DecoderOptions, indent = 0, offset = 0):
     blocks,
     hasError: seemsNotASubMessage,
   };
+};
+
+const decoder = (buf: Buffer, options?: DecoderOptions): DecodeResult => {
+  return _decoder(buf, options, 0, 0, []);
 };
 
 export default decoder;

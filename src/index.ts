@@ -1,4 +1,4 @@
-import decoder from './decoder';
+import _decoder from './decoder';
 import type {
   WireType,
   MessageBlock,
@@ -11,7 +11,7 @@ export type {
   DecodeResult,
   DecoderOptions,
 };
-export { decoder };
+export { _decoder as decoder };
 
 import Viewer, { ViewerProps } from './viewer';
 export { Viewer };

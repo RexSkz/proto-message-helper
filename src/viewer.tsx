@@ -2,6 +2,7 @@ import React from 'react';
 import type { Buffer } from 'buffer/';
 
 import { DecodeResult, MessageBlock, WireType } from './decoder';
+import { getField, getProtoEnumsMap, getProtoMessagesMap, parseProtoFile } from './proto';
 
 import './viewer.less';
 
@@ -9,6 +10,7 @@ export interface ViewerProps {
   result: DecodeResult;
   sortByField?: boolean;
   showRawData?: boolean;
+  protoFile?: string;
 }
 
 interface Part {
@@ -18,12 +20,29 @@ interface Part {
 
 const Viewer: React.FC<ViewerProps> = props => {
   const [highlightRange, setHighlightRange] = React.useState<[number, number]>([-1, -1]);
+  const [selectedProtoField, setSelectedProtoField] = React.useState('');
 
   const blocks = React.useMemo(() => {
-    return props.sortByField
-      ? [...props.result.blocks].sort((a, b) => a.tag.fieldNumber - b.tag.fieldNumber)
-      : props.result.blocks;
+    if (!props.sortByField) {
+      return props.result.blocks;
+    }
+    return [...props.result.blocks].sort((
+      { tag: { fieldNumbers: a } },
+      { tag: { fieldNumbers: b } },
+    ) => {
+      if (a.length < b.length) return -1;
+      if (a.length > b.length) return 1;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] < b[i]) return -1;
+        if (a[i] > b[i]) return 1;
+      }
+      return 0;
+    });
   }, [props.result.blocks, props.sortByField]);
+
+  const protoAST = React.useMemo(() => parseProtoFile(props.protoFile), [props.protoFile]);
+  const protoMessagesMap = React.useMemo(() => getProtoMessagesMap(protoAST), [props.protoFile]);
+  const protoEnumsMap = React.useMemo(() => getProtoEnumsMap(protoAST), [props.protoFile]);
 
   const renderWireType = (message: MessageBlock) => {
     if (message.tag.wireType === WireType.LengthDelimited) {
@@ -32,9 +51,25 @@ const Viewer: React.FC<ViewerProps> = props => {
     return WireType[message.tag.wireType] || 'Unknown';
   };
 
-  const renderData = (value: any, wireType: WireType) => {
+  const renderData = (
+    value: any,
+    wireType: WireType,
+    fieldNumbers: number[],
+    selectedProtoField: string,
+    protoEnumsMap: Map<string, Map<number, string>>,
+  ) => {
     switch (wireType) {
       case WireType.Varint:
+        const field = getField(protoMessagesMap, fieldNumbers, selectedProtoField);
+        if (field) {
+          const enumMap = protoEnumsMap.get(field.type.value);
+          if (enumMap) {
+            const str = enumMap.get(value);
+            if (typeof str === 'string') {
+              return <span>{field.type.value}.{str}({value})</span>;
+            }
+          }
+        }
         return <span>{value}</span>;
       case WireType.Fixed64:
         return <span>{(value as BigInt)?.toString()}</span>;
@@ -68,6 +103,7 @@ const Viewer: React.FC<ViewerProps> = props => {
         }
         return (
           <span>
+            <span>"</span>
             {
               parts.map((part, index) => (
                 <span
@@ -78,6 +114,7 @@ const Viewer: React.FC<ViewerProps> = props => {
                 </span>
               ))
             }
+            <span>"</span>
           </span>
         );
       case WireType.StartGroup:
@@ -123,11 +160,39 @@ const Viewer: React.FC<ViewerProps> = props => {
     );
   };
 
+  const renderFieldName = (message: MessageBlock, selectedProtoField: string) => {
+    if (!protoMessagesMap) {
+      return null;
+    }
+    const field = getField(protoMessagesMap, message.tag.fieldNumbers, selectedProtoField);
+    if (!field) {
+      return null;
+    }
+    return (
+      <abbr className="proto-message-viewer-message-field-type">
+        <span>{field.repeated ? 'repeated ' : ''}{field.type.value} {field.name} = {field.id}</span>
+        ({field.fullName.substring(1)})
+      </abbr>
+    );
+  };
+
   return (
     <>
       {
         props.showRawData ? (
-          <pre className="output-pre">{renderRangeHighlight(props.result.buffer, highlightRange)}</pre>
+          <pre className="proto-message-viewer-output-pre">{renderRangeHighlight(props.result.buffer, highlightRange)}</pre>
+        ) : null
+      }
+      {
+        protoMessagesMap ? (
+          <select value={selectedProtoField} onChange={e => setSelectedProtoField(e.target.value)}>
+            <option value="">Select a field in .proto file</option>
+            {
+              [...protoMessagesMap].map(([messageName]) => (
+                <option key={messageName} value={messageName}>{messageName}</option>
+              ))
+            }
+          </select>
         ) : null
       }
       <div className="proto-message-viewer">
@@ -146,10 +211,7 @@ const Viewer: React.FC<ViewerProps> = props => {
               message.deprecated && 'proto-message-viewer-message-deprecated',
               message.hasError && 'proto-message-viewer-message-error',
             ].filter(Boolean).join(' ');
-            const copyableProps = {
-              onClick: copyText,
-              title: 'Click to copy',
-            };
+            const copyableProps = { onClick: copyText };
             return (
               <div
                 className={classes}
@@ -170,19 +232,12 @@ const Viewer: React.FC<ViewerProps> = props => {
                   0x{message.tag.byte.toString(16).padStart(2, '0')}
                 </span>
                 <span className="proto-message-viewer-message-field-number" {...copyableProps}>
-                  0b{message.tag.fieldNumber.toString(2).padStart(5, '0')}
-                  {
-                    message.tag.fieldName && (
-                      <abbr className="proto-message-viewer-message-field-type">
-                        <span>{message.tag.fieldType}</span>
-                        ({message.tag.fieldName})
-                      </abbr>
-                    )
-                  }
+                  0x{message.tag.fieldNumber.toString(16).padStart(2, '0')}
+                  {renderFieldName(message, selectedProtoField)}
                 </span>
                 <span className="proto-message-viewer-message-wire-type" {...copyableProps}>
                   {renderIndent(message.indent)}
-                  0b{message.tag.wireType.toString(2).padStart(3, '0')}&nbsp;
+                  0x{message.tag.wireType.toString(16).padStart(1, '0')}&nbsp;
                   {renderWireType(message)}
                 </span>
                 <span className="proto-message-viewer-message-indent" {...copyableProps}>
@@ -190,7 +245,7 @@ const Viewer: React.FC<ViewerProps> = props => {
                 </span>
                 <span className="proto-message-viewer-message-data" {...copyableProps}>
                   {renderIndent(message.indent)}
-                  {renderData(message.value, message.tag.wireType)}
+                  {renderData(message.value, message.tag.wireType, message.tag.fieldNumbers, selectedProtoField, protoEnumsMap)}
                 </span>
               </div>
             );

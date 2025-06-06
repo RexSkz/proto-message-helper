@@ -17,6 +17,8 @@ const Demo: React.FC = () => {
   const [modeProto, setModeProto] = React.useState('file');
   const [textProto, setTextProto] = React.useState('');
   const [protoFile, setProtoFile] = React.useState('');
+  const [messageFileName, setMessageFileName] = React.useState('No file chosen');
+  const [protoFileName, setProtoFileName] = React.useState('No file chosen');
   const [result, setResult] = React.useState<DecodeResult | null>(null);
   const [sortByField, setSortByField] = React.useState(false);
 
@@ -92,12 +94,29 @@ const Demo: React.FC = () => {
             <option value="hex">Hex</option>
             <option value="file">File</option>
           </select>
-          <a className="input-example-button" onClick={setInputExample}>Example</a>
+          <a className="input-example-button" onClick={setInputExample}>✨{'\u00A0'}Example</a>
           {
             modeMessage === 'file' && (
-              <p style={{ margin: 0, border: '1px solid #858585', borderRadius: 4, padding: 8 }}>
-                <input id="file-message" type="file" />
-              </p>
+              <div className="file-input-container">
+                <input
+                  id="file-message"
+                  type="file"
+                  className="input-file-hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setMessageFileName(e.target.files[0].name);
+                    } else {
+                      setMessageFileName('No file chosen');
+                    }
+                  }}
+                />
+                <label htmlFor="file-message" className="input-file-label">
+                  📁{'\u00A0'}Choose Message File
+                </label>
+                <span className={`file-name-display ${messageFileName !== 'No file chosen' ? 'has-file' : ''}`}>
+                  {messageFileName}
+                </span>
+              </div>
             )
           }
           {
@@ -120,12 +139,30 @@ const Demo: React.FC = () => {
             <option value="hex">Hex</option>
             <option value="file">File</option>
           </select>
-          <a className="input-example-button" onClick={setProtoExample}>Example</a>
+          <a className="input-example-button" onClick={setProtoExample}>✨{'\u00A0'}Example</a>
           {
             modeProto === 'file' && (
-              <p style={{ margin: 0, border: '1px solid #858585', borderRadius: 4, padding: 8 }}>
-                <input id="file-proto" type="file" accept=".proto" />
-              </p>
+              <div className="file-input-container">
+                <input
+                  id="file-proto"
+                  type="file"
+                  accept=".proto"
+                  className="input-file-hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      setProtoFileName(e.target.files[0].name);
+                    } else {
+                      setProtoFileName('No file chosen');
+                    }
+                  }}
+                />
+                <label htmlFor="file-proto" className="input-file-label">
+                  📁{'\u00A0'}Choose Proto File
+                </label>
+                <span className={`file-name-display ${protoFileName !== 'No file chosen' ? 'has-file' : ''}`}>
+                  {protoFileName}
+                </span>
+              </div>
             )
           }
           {
@@ -142,7 +179,7 @@ const Demo: React.FC = () => {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1em' }}>
-        <button className="analyse" onClick={analyse}>Analyse</button>
+        <button className="analyse" onClick={analyse}>🔍{'\u00A0'}Analyse</button>
         {
           !!result && (
             <label htmlFor="sort-by-field">

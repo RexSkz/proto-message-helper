@@ -1,14 +1,15 @@
 html,
 body {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: 'Roboto', Helvetica, Arial, sans-serif; /* Updated body font */
   margin: 0;
   padding: 0;
-  background: #f2f4f6;
+  background: #f7f9fc; /* Lighter gray background */
+  color: #333333; /* Darker primary text color */
 }
 
 code {
-  background: #f9f2f4;
-  color: #c7254e;
+  background: #e9eaf0; /* New code background */
+  color: #d94862; /* New code text color */
   padding: 0 4px;
 }
 
@@ -28,25 +29,30 @@ a:visited {
   width: 100%;
   max-width: 1366px;
   margin: auto;
-  padding: 1em 2em;
+  padding: 2em 3em;
   position: relative;
   font-size: 14px;
 
+  h1 {
+    font-family: 'Poppins', sans-serif; /* New heading font */
+    margin-bottom: 1.5em;
+  }
+
   blockquote {
-    margin: 0 0 1em;
+    margin: 0 0 1.5em; /* Increased margin-bottom */
   }
 
   .demo-input {
     display: flex;
-    justify-content: space-between;
-    margin-top: 1em;
-    padding-top: 1em;
+    gap: 2em; /* Increased gap */
+    margin-top: 1.5em; /* Increased margin-top */
+    padding-top: 1.5em; /* Increased padding-top */
     border-top: 1px dashed;
 
     & > div {
-      width: calc(50% - 1.5em);
+      flex: 1; /* Make sections take equal width */
       margin-bottom: 1em;
-      padding: 0.5em;
+      padding: 1em; /* Increased padding */
       border: 1px solid #858585;
       border-radius: 4px;
     }
@@ -54,35 +60,102 @@ a:visited {
 
   .input {
     &-select {
+      border: 1px solid #cccccc;
+      background-color: #ffffff;
+      padding: 8px 12px;
       border-radius: 4px;
       box-sizing: border-box;
       margin-bottom: 8px;
-      padding: 4px 8px;
       width: 240px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 10px 10px;
+      cursor: pointer;
+
+      &:hover {
+        border-color: #2196f3;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+      }
     }
 
     &-textbox {
+      border: 1px solid #cccccc;
+      background-color: #ffffff;
+      padding: 8px 12px;
       border-radius: 4px;
       box-sizing: border-box;
       display: block;
-      padding: 4px 8px;
       resize: vertical;
       width: 100%;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+
+      &:hover {
+        border-color: #a0a0a0;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: #2196f3;
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+      }
     }
   }
 
   .input-example-button {
-    margin-left: 8px;
+    background-color: #ffffff;
+    color: #2196f3;
+    border: 1px solid #2196f3;
+    padding: 8px 16px;
+    border-radius: 4px;
     cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
     &:hover {
-      text-decoration: underline;
+      background-color: #f0f7ff;
+      color: #1e88e5;
+      border-color: #1e88e5;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border-color: #1976d2;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
   }
 
   .analyse {
+    background-color: #2196f3;
+    color: #ffffff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-right: 8px;
-    padding: 4px 8px;
+    margin-bottom: 1.5em; /* Added margin-bottom */
+
+    &:hover {
+      background-color: #1e88e5;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      background-color: #1976d2;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
   }
 
   .output-pre {
@@ -94,5 +167,67 @@ a:visited {
     margin: 4em 0 0;
     padding: 2em 0;
     text-align: center;
+  }
+
+  // Custom File Input Styles
+  .file-input-container {
+    margin: 8px 0 16px; // Added more bottom margin for separation
+    padding: 12px;    // Increased padding
+    background-color: #f7f9fc;
+    border-radius: 4px;
+    display: flex; // Using flex for better alignment of label and filename
+    align-items: center;
+  }
+
+  .input-file-hidden {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+  }
+
+  .input-file-label {
+    // Based on .input-example-button
+    background-color: #ffffff;
+    color: #2196f3;
+    border: 1px solid #2196f3;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center; // Ensure text is centered if label width varies
+
+    &:hover {
+      background-color: #f0f7ff;
+      color: #1e88e5;
+      border-color: #1e88e5;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border-color: #1976d2;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  .file-name-display {
+    margin-left: 12px;
+    font-size: 0.9em;
+    color: #757575;
+    font-style: italic;
+    // display: inline-block; // Not needed if parent is flex
+    // vertical-align: middle; // Not needed if parent is flex with align-items: center
+
+    &.has-file {
+      color: #333333;
+      font-style: normal;
+      font-weight: 500; // Slightly bolder for emphasis
+    }
   }
 }
